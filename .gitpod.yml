@@ -1,5 +1,9 @@
 tasks:
-  - init: |
+  - name: main
+    before: |
+      echo $GITPOD_GIT_USER_NAME
+      sh -c "$(curl -fsLS git.io/chezmoi)" -- init --apply $GITPOD_GIT_USER_NAME
+    init: |
       echo 'TODO: build project'
     command: |
       echo 'TODO: start app'
