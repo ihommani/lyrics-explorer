@@ -5,6 +5,9 @@ tasks:
     before: |
       echo $AGE_KEY > $HOME/key.txt
       sh -c "$(curl -fsLS git.io/chezmoi)" -- init --apply $GITPOD_GIT_USER_NAME
+      (cd bin && ./chezmoi apply)
+      gcloud auth activate-service-account --key-file=$HOME/sandbox-ihommani-720149a7fc48.json
+      gcloud config set core/project sandbox-ihommani
     init: |
       echo 'TODO: build project'
     command: |
