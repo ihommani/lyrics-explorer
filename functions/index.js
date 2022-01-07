@@ -1,5 +1,9 @@
 require('dotenv').config()
 const SpotifyWebApi = require('spotify-web-api-node');
+const {PubSub} = require('@google-cloud/pubsub');
+
+const pubSubClient = new PubSub();
+const topic = pubSubClient.topic('opinion')
 
 //https://stackoverflow.com/questions/31413749/node-js-promise-all-and-foreach
 //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
@@ -47,17 +51,29 @@ async function getTracksFromArtist(artistName) {
   return Promise.all(trackPromises)
 }
 
+async function sendMessages(artistOfInterest) {
+
+  let tracks = await getTracksFromArtist(artistOfInterest)
+  .then(resp => resp
+    .map(e => e.body)
+    .reduce((acc, x) => acc.concat(x.items), []) // Should work with a flatMap starting node11
+    .map(e => e.name))
+  .catch(err => console.log(err))
+
+  var promises = tracks
+                 .map((track) => ({ 'songName': track })) //TODO: add artist , release date, album name, genre
+                 .map(jsonObject => topic.publishMessage({json: jsonObject}))
+
+  return {'tracks': tracks, 'pubsubPromises': promises }
+}
+
 // main
 exports.helloWorld = async (req, res) => {
 
   const artistOfInterest = req.query.artist || 'Diams'
+  let tracks = await sendMessages(artistOfInterest)
 
-  let tracks = await getTracksFromArtist(artistOfInterest)
-    .then(resp => resp
-      .map(e => e.body)
-      .reduce((acc, x) => acc.concat(x.items), []) //Should work with a flatMap starting node11
-      .map(e => e.name))
-    .catch(err => console.log(err))
+  await Promise.all(tracks.pubsubPromises)
 
-  res.send(tracks);
+  res.send(tracks.tracks);
 };
