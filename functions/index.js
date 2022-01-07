@@ -10,7 +10,7 @@ const clientId = process.env.SPOTIFY_APP_CLIENT_ID,
   clientSecret = process.env.SPOTIFY_APP_CLIENT_SECRET
 
 // Create the api object with the credentials
-var spotifyApi = new SpotifyWebApi({
+const spotifyApi = new SpotifyWebApi({
   clientId: clientId,
   clientSecret: clientSecret
 });
@@ -33,7 +33,7 @@ function getAlbumIds(artistId) {
 
 function getTracksFromAlbum(albumId) {
   return spotifyApi.getAlbumTracks(albumId)
-};
+}
 
 function getArtistId(artistName) {
   return spotifyApi.searchArtists(artistName)
