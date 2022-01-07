@@ -1,21 +1,13 @@
 require('dotenv').config()
 const SpotifyWebApi = require('spotify-web-api-node');
-const axios = require('axios');
 
 //https://stackoverflow.com/questions/31413749/node-js-promise-all-and-foreach
 //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises
 //https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Asynchronous/Async_await
 
-const musixmatch = axios.create({
-  baseURL: 'https://api.musixmatch.com/ws/1.1/',
-  timeout: 1000,
-  headers: { 'X-Custom-Header': 'foobar' }
-});
-
-var clientId = process.env.SPOTIFY_APP_CLIENT_ID,
-  clientSecret = process.env.SPOTIFY_APP_CLIENT_SECRET,
-  musixmatchApikey = process.env.MUSIXMATCH_API_KEY;
+const clientId = process.env.SPOTIFY_APP_CLIENT_ID,
+  clientSecret = process.env.SPOTIFY_APP_CLIENT_SECRET
 
 // Create the api object with the credentials
 var spotifyApi = new SpotifyWebApi({
@@ -66,15 +58,6 @@ exports.helloWorld = async (req, res) => {
       .reduce((acc, x) => acc.concat(x.items), []) //Should work with a flatMap starting node11
       .map(e => e.name))
     .catch(err => console.log(err))
-
-  // https://github.com/musixmatch/musixmatch-sdk
-  musixmatch.get('matcher.lyrics.get?q_artist=diams&q_track=M%C3%A9lanie&apikey=' + musixmatchApikey)
-    .then(resp => resp.data)
-    .then(data => data.message)
-    .then(message => message.body)
-    .then(body => body.lyrics)
-    .then(lyrics => lyrics.lyrics_body)
-    .then(console.log)
 
   res.send(tracks);
 };
