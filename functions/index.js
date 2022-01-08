@@ -13,7 +13,8 @@ const topic = pubSubClient.topic('opinion')
 //https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Asynchronous/Async_await
 
 const clientId = process.env.SPOTIFY_APP_CLIENT_ID,
-  clientSecret = process.env.SPOTIFY_APP_CLIENT_SECRET
+  clientSecret = process.env.SPOTIFY_APP_CLIENT_SECRET,
+  geniusToken = process.env.GENIUS_TOKEN
 
 // Create the api object with the credentials
 const spotifyApi = new SpotifyWebApi({
@@ -24,7 +25,7 @@ const spotifyApi = new SpotifyWebApi({
 const geniusApi = axios.create({
   baseURL: 'https://api.genius.com',
   timeout: 3000,
-  headers: { 'Authorization': 'Bearer AEQQj-O80RxVKVgAnQDiHV0BUfO53Wg4HGczKERbQbxQcy26VCGu08ObyC22kX2V'}
+  headers: { 'Authorization': 'Bearer ' + geniusToken}
 });
 
 // Retrieve an access token.
@@ -35,21 +36,38 @@ spotifyApi.clientCredentialsGrant().then(
   }
 ).catch(err => console.log('Something went wrong when retrieving an access token', err))
 
-function getAlbumIds(artistId) {
-  return spotifyApi.getArtistAlbums(artistId, { limit: 2, offset: 0 }) // warning point for throtling
-    .then(data => data.body)
-    .then(body => body.items)
-    .then(items => items.map(element => element.id))
-    .catch(err => console.log(err))
+// main
+exports.getSongsMetadata = async (req, res) => {
+  const artistOfInterest = req.query.artist || 'Diams'
+  let songs = await sendMessages(artistOfInterest)
+  await Promise.all(songs.pubsubPromises)
+  res.send(songs.songs);
+};
+
+exports.getLyricsHTML = async (req, res) => {
+  // request must contain: album name, year, artist name, 
+  let {data} = await geniusApi.get('/search', {params: {q : 'Kendrick'}})
+  if (data.response.hits.length === 0) return null;
+  let htmlUrl = data.response.hits[0].result.url
+  res.send(`<a href=${htmlUrl}>htmlUrl</a>`)
 }
 
-function getTracksFromAlbum(albumId) {
-  return spotifyApi.getAlbumTracks(albumId)
-}
+async function sendMessages(artistOfInterest) {
 
-function getArtistId(artistName) {
-  return spotifyApi.searchArtists(artistName)
-    .then(resp => resp.body.artists.items[0].id)
+  let songs = await getTracksFromArtist(artistOfInterest)
+  .then(resp => resp
+    .map(e => e.body)
+    .reduce((acc, x) => acc.concat(x.items), []) // Should work with a flatMap starting node11
+    .map(e => e.name))
+  .catch(err => console.log(err))
+
+  let [genre, artist, date, album, song] =  ['rap', 'diams', '2000-11-06', 'Melanie', 'la boulette']
+
+  var promises = songs
+                 .map((track) => ({'song': track, 'artist': artist, 'genre': genre, 'date': date, 'album': album, 'song': song}))
+                 .map(jsonObject => topic.publishMessage({json: jsonObject}))
+
+  return {'songs': songs, 'pubsubPromises': promises }
 }
 
 async function getTracksFromArtist(artistName) {
@@ -59,42 +77,19 @@ async function getTracksFromArtist(artistName) {
   return Promise.all(trackPromises)
 }
 
-async function sendMessages(artistOfInterest) {
-
-  let tracks = await getTracksFromArtist(artistOfInterest)
-  .then(resp => resp
-    .map(e => e.body)
-    .reduce((acc, x) => acc.concat(x.items), []) // Should work with a flatMap starting node11
-    .map(e => e.name))
-  .catch(err => console.log(err))
-
-  var promises = tracks
-                 .map((track) => ({ 'songName': track })) //TODO: add artist , release date, album name, genre
-                 .map(jsonObject => topic.publishMessage({json: jsonObject}))
-
-  return {'tracks': tracks, 'pubsubPromises': promises }
+function getArtistId(artistName) {
+  return spotifyApi.searchArtists(artistName)
+    .then(resp => resp.body.artists.items[0].id)
 }
 
-// main
-exports.getSongsMetadata = async (req, res) => {
+function getTracksFromAlbum(albumId) {
+  return spotifyApi.getAlbumTracks(albumId)
+}
 
-  const artistOfInterest = req.query.artist || 'Diams'
-  let tracks = await sendMessages(artistOfInterest)
-
-  await Promise.all(tracks.pubsubPromises)
-
-  res.send(tracks.tracks);
-};
-
-
-exports.getLyricsHTML = async (req, res) => {
-
-  // request must contain: album name, year, artist name, 
-  let {data} = await geniusApi.get('/search', {params: {q : 'Kendrick'}})
-
-  if (data.response.hits.length === 0) return null;
-
-  let htmlUrl = data.response.hits[0].result.url
-
-  res.send(`<a href=${htmlUrl}>htmlUrl</a>`)
+function getAlbumIds(artistId) {
+  return spotifyApi.getArtistAlbums(artistId, { limit: 2, offset: 0 }) // warning point for throtling
+    .then(data => data.body)
+    .then(body => body.items)
+    .then(items => items.map(element => element.id))
+    .catch(err => console.log(err))
 }
