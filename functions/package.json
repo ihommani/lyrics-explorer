@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "functions-framework --target=getSongsMetadata"
+    "start_spotify": "functions-framework --target=getSongsMetadata",
+    "start_genius": "functions-framework --target=getLyricsHTML"
   },
   "author": "",
   "license": "ISC",

@@ -1,6 +1,8 @@
 require('dotenv').config()
+
 const SpotifyWebApi = require('spotify-web-api-node');
 const {PubSub} = require('@google-cloud/pubsub');
+const axios = require('axios');
 
 const pubSubClient = new PubSub();
 const topic = pubSubClient.topic('opinion')
@@ -17,6 +19,12 @@ const clientId = process.env.SPOTIFY_APP_CLIENT_ID,
 const spotifyApi = new SpotifyWebApi({
   clientId: clientId,
   clientSecret: clientSecret
+});
+
+const geniusApi = axios.create({
+  baseURL: 'https://api.genius.com',
+  timeout: 3000,
+  headers: { 'Authorization': 'Bearer AEQQj-O80RxVKVgAnQDiHV0BUfO53Wg4HGczKERbQbxQcy26VCGu08ObyC22kX2V'}
 });
 
 // Retrieve an access token.
@@ -77,3 +85,16 @@ exports.getSongsMetadata = async (req, res) => {
 
   res.send(tracks.tracks);
 };
+
+
+exports.getLyricsHTML = async (req, res) => {
+
+  // request must contain: album name, year, artist name, 
+  let {data} = await geniusApi.get('/search', {params: {q : 'Kendrick'}})
+
+  if (data.response.hits.length === 0) return null;
+
+  let htmlUrl = data.response.hits[0].result.url
+
+  res.send(`<a href=${htmlUrl}>htmlUrl</a>`)
+}
