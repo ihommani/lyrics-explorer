@@ -68,7 +68,7 @@ async function sendMessages(artistOfInterest) {
 }
 
 // main
-exports.helloWorld = async (req, res) => {
+exports.getSongsMetadata = async (req, res) => {
 
   const artistOfInterest = req.query.artist || 'Diams'
   let tracks = await sendMessages(artistOfInterest)
