@@ -48,26 +48,38 @@ exports.getSongsMetadata = async (req, res) => {
 };
 
 exports.getLyricsHTML = async (req, res) => {
-  // request must contain: album name, year, artist name, 
-  let {data} = await geniusApi.get('/search', {params: {q : 'Kendrick'}})
-  if (data.response.hits.length === 0) return null;
-  let htmlUrl = data.response.hits[0].result.url
+  // request must contain: album name, year, artist name
+  // TODO: expose the model {artist, genre, reelase_date, album_name, track} as a class with service to lazy load its url
   // TODO: call the content and push it to GCS
-  res.send(`<a href=${htmlUrl}>htmlUrl</a>`)
+  let url = await returnLyricsUrl(["Diam's", "la boulette"])
+  let content  = await axios.get(url)
+  console.log(content)
+  res.send(`<a href=${url}>htmlUrl</a>`)
 }
+
+async function returnLyricsUrl(searchItems) {
+  // TODO: control the input which is an array of string
+  const requestParameter = searchItems.reduce((previousValue, currentValue) => previousValue.concat(' ', currentValue))
+  let {data} = await geniusApi.get('/search', {params: {q : requestParameter }})
+  // We trust the Genius search engine accurracy to return the right result in first position
+  return data.response.hits?.[0]?.result.url
+}
+
+
 
 async function* generatePayloads(artistOfInterest) {
   const trackNameFilter = '.[] |= {"name": .name}'
-  let pubSubMessagePayload
+  let messagePayload
 
   for await (let albumContainer of generateAlbumContainers(artistOfInterest)){
     let albumSongs = await albumContainer.tracks
     let tracks = await jq.run(trackNameFilter, albumSongs.body.items, { input: 'json', output: 'json' })
 
-    pubSubMessagePayload = tracks.map((track) => ({ 'artist': albumContainer.artist.name, 'genre': albumContainer.artist.genres,
+    messagePayload = tracks.map((track) => ({ 'artist': albumContainer.artist.name, 'genre': albumContainer.artist.genres,
                                                        'release_date': albumContainer.album.release_date, 'album_name': albumContainer.album.name,
                                                        'track': track.name }))
-    yield pubSubMessagePayload
+    console.log(messagePayload)
+    yield messagePayload
   }
 }
 
