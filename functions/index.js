@@ -8,6 +8,12 @@ const jq = require('node-jq')
 const pubSubClient = new PubSub();
 const topic = pubSubClient.topic('opinion')
 
+const {Storage} = require('@google-cloud/storage');
+
+const storage = new Storage();
+
+const myBucket = storage.bucket('ihommani-html-bucket');
+
 //https://stackoverflow.com/questions/31413749/node-js-promise-all-and-foreach
 //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises
@@ -37,7 +43,7 @@ spotifyApi.clientCredentialsGrant().then(
   }
 ).catch(err => console.log('Something went wrong when retrieving an access token', err))
 
-// main
+// main to get {artist, album ,track} meta
 exports.getSongsMetadata = async (req, res) => {
   const artistOfInterest = req.query.artist || 'Diams' // TODO: reject with error on missing artist
   
@@ -45,15 +51,34 @@ exports.getSongsMetadata = async (req, res) => {
         Promise.all(payloads.map(payload => topic.publishMessage({json: payload})))
     }
   res.send('hello')
-};
+}
 
+// main to get html lyrics
 exports.getLyricsHTML = async (req, res) => {
   // request must contain: album name, year, artist name
   // TODO: expose the model {artist, genre, reelase_date, album_name, track} as a class with service to lazy load its url
-  // TODO: call the content and push it to GCS
-  let url = await returnLyricsUrl(["Diam's", "la boulette"])
-  let content  = await axios.get(url)
-  console.log(content)
+  let url = await returnLyricsUrl(["Diam's", "la boulette"]).catch(err => console.log(err))
+  
+  if(!url)
+    return
+    
+  // TODO: create this array through queue message consumption
+  let path = ['rap', 'diams', '2006-06-02', 'dans_ma_bulle', 'la_boullette'].reduce((previousValue, currentValue) => previousValue.concat('/', currentValue))
+  
+  const file = myBucket.file(path + '.html')
+
+  await axios({
+    method: 'get',
+    url: url,
+    responseType: 'stream'
+  })
+  .then((response) => {
+      response.data.pipe(file.createWriteStream()).on('finish', () => {
+        console.log('Finished !!'); // TODO: log the path on GCS
+      });
+    })
+  .catch(err => console.log(err))
+
   res.send(`<a href=${url}>htmlUrl</a>`)
 }
 
@@ -64,8 +89,6 @@ async function returnLyricsUrl(searchItems) {
   // We trust the Genius search engine accurracy to return the right result in first position
   return data.response.hits?.[0]?.result.url
 }
-
-
 
 async function* generatePayloads(artistOfInterest) {
   const trackNameFilter = '.[] |= {"name": .name}'
