@@ -10,10 +10,10 @@ from bs4.element import SoupStrainer
 storage_client = storage.Client()
 
 # The name for the new bucket
-bucket_name = "test-ihommani"
+bucket_name = "ihommani-html-bucket"
 bucket = storage_client.get_bucket(bucket_name)
 
-blob = bucket.blob("lyrics.html")
+blob = bucket.blob("rap/diams/2006-06-02/dans_ma_bulle/la_boullette.html")
 
 
 with open("/tmp/lyrics.html", 'wb') as file_obj:
