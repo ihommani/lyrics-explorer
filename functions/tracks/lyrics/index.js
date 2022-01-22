@@ -13,7 +13,7 @@ exports.getLyricsHTML = async (req, res) => {
     let url = await returnLyricsUrl(["Diam's", "la boulette"]).catch(err => console.log(err))
 
     if (!url)
-        return
+        res.send(`Nothing found`)
 
     // TODO: create this array through queue message payload consumption
     let path = ['rap', 'diams', '2006-06-02', 'dans_ma_bulle', 'la_boullette'].reduce((previousValue, currentValue) => previousValue.concat('/', currentValue))
