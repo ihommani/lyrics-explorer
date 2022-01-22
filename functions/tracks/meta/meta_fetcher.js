@@ -30,7 +30,6 @@ exports.generatePayloads = async function* generatePayloads(artistOfInterest) {
             'release_date': albumContainer.album.release_date, 'album_name': albumContainer.album.name,
             'track': track.name
         }))
-        console.log(messagePayload)
         yield messagePayload
     }
 }
