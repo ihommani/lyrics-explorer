@@ -2,9 +2,9 @@ import functions_framework
 import re
 
 # Imports the Google Cloud client library
-from google.cloud import storage
 
 from bs4 import BeautifulSoup
+from google.cloud import storage
 
 # Instantiates a client
 storage_client = storage.Client()
@@ -14,10 +14,8 @@ lyrics_cleaning_expression = '\\[.*?\\]|\\n'
 # Model of the event: https://cloud.google.com/functions/docs/calling/storage#functions-calling-storage-python
 @functions_framework.cloud_event
 def hello_cloud_event(cloud_event):
-    print(f"Received event with ID: {cloud_event['bucket']} and data {cloud_event.data}")
-
-    bucket = storage_client.get_bucket(cloud_event['bucket']) # Get the bucket name from the env variable 
-    blob = bucket.blob(cloud_event['file'])
+    event_bucket = storage_client.get_bucket(cloud_event.data['bucket']) # Get the bucket name from the env variable 
+    blob = event_bucket.blob(cloud_event.data['name'])
 
     with open("/tmp/lyrics.html", 'wb') as file_obj:
         blob.download_to_file(file_obj)
@@ -26,7 +24,7 @@ def hello_cloud_event(cloud_event):
         soup = BeautifulSoup(file_obj, 'html.parser')
         lyrics_elements =  [re.sub(lyrics_cleaning_expression, '', i.get_text(' ').strip()) for i in soup.find_all(is_lyrics_container)]
         bucket = storage_client.bucket('test-ihommani')
-        blob = bucket.blob(cloud_event['file'].replace('.html', '.txt'))
+        blob = bucket.blob(cloud_event.data['name'].replace('.html', '.txt'))
         blob.upload_from_string(lyrics_elements[0])
 
     print(lyrics_elements)
