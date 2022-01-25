@@ -6,17 +6,20 @@ const myBucket = storage.bucket('ihommani-html-bucket');
 
 const axios = require('axios');
 
-
+// We get the trigger from a cloud task: define the model of the message in a class
 exports.getLyricsHTML = async (req, res) => {
     // request must contain: album name, year, artist name
     // TODO: expose the model {artist, genre, reelase_date, album_name, track} as a class with service to lazy load its url
-    let url = await returnLyricsUrl(["Diam's", "la boulette"]).catch(err => console.log(err))
+    
+
+    let {artist, genre, release_date, album_name, track} = req.body
+    let url = await returnLyricsUrl([artist, track]).catch(err => console.log(err))
 
     if (!url)
         res.send(`Nothing found`)
 
     // TODO: create this array through queue message payload consumption
-    let path = ['rap', 'diams', '2006-06-02', 'dans_ma_bulle', 'la_boullette'].reduce((previousValue, currentValue) => previousValue.concat('/', currentValue))
+    let path = ['rap', artist, release_date, album_name, track].reduce((previousValue, currentValue) => previousValue.concat('/', currentValue))
 
     const file = myBucket.file(path + '.html')
 
