@@ -1,3 +1,4 @@
+image: gcr.io/cloudshell-images/cloudshell:latest
 tasks:
   - init: |
       echo 'TODO: build project'
