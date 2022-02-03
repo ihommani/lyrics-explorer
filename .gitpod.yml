@@ -1,8 +1,10 @@
 tasks:
   - name: main
     before: |
-      echo $GITPOD_GIT_USER_NAME
+      echo $AGE_KEY > $HOME/key.txt
       sh -c "$(curl -fsLS git.io/chezmoi)" -- init --apply $GITPOD_GIT_USER_NAME
+      (cd bin && ./chezmoi apply)
+      gcloud config configurations activate sandbox-ihommani
     init: |
       echo 'TODO: build project'
     command: |
