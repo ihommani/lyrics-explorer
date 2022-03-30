@@ -19,7 +19,7 @@ exports.getLyricsHTML = async (req, res) => {
         res.send(`Nothing found`)
 
     // TODO: create this array through queue message payload consumption
-    let path = ['rap', artist, release_date, album_name, track].reduce((previousValue, currentValue) => previousValue.concat('/', currentValue))
+    let path = [genre, artist, release_date, album_name, track].reduce((previousValue, currentValue) => previousValue.concat('/', currentValue))
 
     const file = myBucket.file(path + '.html')
 

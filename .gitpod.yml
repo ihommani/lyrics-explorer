@@ -9,7 +9,7 @@ tasks:
     init: |
       echo 'TODO: build project'
     command: |
-      gcloud config configurations activate sandbox-ihommani
+      gcloud config configurations activate sandbox-wescale
 
 #https://github.com/GoogleCloudPlatform/cloud-code-vscode/issues/256
 vscode:

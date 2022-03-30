@@ -15,7 +15,7 @@
         "dotenv": "^10.0.0",
         "node-jq": "^2.1.0",
         "spotify-web-api-node": "^5.0.2"
-    }, 
+    },
     "devDependencies": {
         "@google-cloud/functions-framework": "^2.0.0"
     }
