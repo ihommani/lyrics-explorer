@@ -13,11 +13,12 @@ exports.getLyricsHTML = async (req, res) => {
     
 
     let {artist, genre, release_date, album_name, track} = req.body
+    console.log(req.body)
     let url = await returnLyricsUrl([artist, track]).catch(err => console.log(err))
-
+    console.log(url)
     if (!url)
         res.send(`Nothing found`)
-
+    
     // TODO: create this array through queue message payload consumption
     let path = [genre, artist, release_date, album_name, track].reduce((previousValue, currentValue) => previousValue.concat('/', currentValue))
 

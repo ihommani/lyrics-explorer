@@ -42,7 +42,7 @@ exports.createHttpTaskWithToken = async function (
 
   // Schedule time can not be in the past.
   if (convertedDate < currentDate) {
-    console.error('Scheduled date in the past.');
+    //console.error('Scheduled date in the past.');
   } else if (convertedDate > currentDate) {
     const date_diff_in_seconds = (convertedDate - currentDate) / 1000;
     // Restrict schedule time to the 30 day maximum.
