@@ -3,9 +3,7 @@ image:
 tasks:
   - name: main
     before: |
-      echo $AGE_KEY > $HOME/key.txt
-      sh -c "$(curl -fsLS git.io/chezmoi)" -- init --apply $GITPOD_GIT_USER_NAME
-      (cd bin && ./chezmoi apply)
+      echo 'TODO: build project'
     init: |
       echo 'TODO: build project'
     command: |
