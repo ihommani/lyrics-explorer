@@ -1,9 +1,17 @@
+image:
+  file: gitpod.Dockerfile
 tasks:
   - name: main
     before: |
-      echo $GITPOD_GIT_USER_NAME
+      echo $AGE_KEY > $HOME/key.txt
       sh -c "$(curl -fsLS git.io/chezmoi)" -- init --apply $GITPOD_GIT_USER_NAME
+      (cd bin && ./chezmoi apply)
     init: |
       echo 'TODO: build project'
     command: |
-      echo 'TODO: start app'
+      gcloud config configurations activate sandbox-wescale
+
+#https://github.com/GoogleCloudPlatform/cloud-code-vscode/issues/256
+vscode:
+  extensions:
+    - https://github.com/GoogleCloudPlatform/cloud-code-vscode/releases/download/v1.17.0/cloudcode-1.17.0.vsix
